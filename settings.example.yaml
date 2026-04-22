@@ -1,0 +1,69 @@
+autonomy:
+  enabled: true
+  allow_background_execution: true
+  auto_apply_low_risk: false           # set to true once you trust the agent
+  require_approval_for_medium_risk: true
+  block_high_risk: true
+
+training:
+  warmup_days: 14
+  episodes_per_day: 50
+  max_steps_per_episode: 25
+  policy_backend: "deterministic"      # options: deterministic | sentence-transformer | onnx
+
+deployment:
+  runtime_name: "local"
+  max_background_agents: 3
+  heartbeat_seconds: 30
+
+bridge:
+  host: "127.0.0.1"
+  port: 8765
+  workspace_root: "."                  # path to your project root
+  event_log_path: ".agent/events.jsonl"
+
+memory:
+  database_path: ".agent/agent.db"
+  max_recent_items: 10
+
+shadow:
+  enabled: true
+  root_directory: ".shadow"
+  retention_limit: 5
+  auto_clone_recent_workspace: true
+
+research:
+  embedding_dimensions: 256
+  sequence_window: 64
+  offline_batch_size: 32
+  policy_model: "sequence-transformer"
+  value_model: "twin-q-network"
+
+encoders:
+  code_backend: "deterministic"        # options: deterministic | sentence-transformer
+  behavior_backend: "deterministic"
+  context_backend: "deterministic"
+  sentence_transformer_model: "all-MiniLM-L6-v2"
+  onnx_model_path:                     # leave blank unless using onnx backend
+
+rl:
+  # Core
+  gamma: 0.99
+  learning_rate: 0.0003
+  batch_size: 32
+  replay_capacity: 4096
+
+  # Curiosity (RND)
+  curiosity_enabled: true
+  curiosity_beta: 0.005                # scale of intrinsic reward — lower = less exploration pressure
+
+  # N-step returns
+  n_step: 5
+
+  # Curriculum
+  curriculum_enabled: true
+  curriculum_success_threshold: 0.70  # promote to harder tasks above this win rate
+  curriculum_demotion_threshold: 0.35 # demote when win rate drops below this
+
+  # Trajectory window
+  trajectory_window: 10               # steps of episode history injected into each observation

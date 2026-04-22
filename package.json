@@ -1,0 +1,22 @@
+{
+  "name": "@local-ide-agent/client",
+  "version": "0.1.0",
+  "description": "Node client for the Local IDE RL Agent bridge.",
+  "type": "module",
+  "main": "sdk/index.js",
+  "exports": {
+    ".": "./sdk/index.js"
+  },
+  "bin": {
+    "local-ide-agent-client": "./bin/local-ide-agent-client.js"
+  },
+  "keywords": [
+    "ai",
+    "agent",
+    "ide",
+    "rl",
+    "vscode",
+    "jetbrains"
+  ],
+  "license": "MIT"
+}
