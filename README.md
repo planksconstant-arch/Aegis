@@ -7,7 +7,7 @@
 <p align="center">
   <a href="https://python.org"><img src="https://img.shields.io/badge/python-3.11+-blue.svg" alt="Python 3.11+"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
-  <a href="https://github.com/your-org/local-ide-agent/actions"><img src="https://github.com/your-org/local-ide-agent/actions/workflows/test.yml/badge.svg" alt="Tests"></a>
+  <a href="https://github.com/planksconstant-arch/Aegis/actions"><img src="https://github.com/planksconstant-arch/Aegis/actions/workflows/test.yml/badge.svg" alt="Tests"></a>
 </p>
 
 ---
@@ -71,13 +71,13 @@ For rapid utilization, the system is distributed via standard Python tooling wit
 
 ```bash
 # 1. Install via pip
-pip install local-ide-agent
+pip install aegis-agent
 
 # 2. Train the baseline policy (saves to .agent/policy_weights.npz)
-local-ide-agent train --episodes 50
+aegis-agent train --episodes 50
 
 # 3. Launch live telemetry monitoring
-local-ide-agent dashboard
+aegis-agent dashboard
 ```
 
 Alternatively, use the provided one-click installers for OS-native fetching:
@@ -89,7 +89,7 @@ The agent operates as a headless daemon listening on `127.0.0.1:8765`.
 
 1. **Start the background process:**
    ```bash
-   local-ide-agent serve-bridge
+   aegis-agent serve-bridge
    ```
 2. **Telemetry Post (`/tick`):** Your IDE extension (VS Code, Neovim) submits the current code context and failing compiler diagnostics to the agent.
 3. **Decision Return:** The agent returns a mathematically ranked `CandidatePatch` specifically formulated to pass local background tests.

@@ -3,13 +3,13 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "local-ide-agent"
-version = "0.2.0"
+name = "aegis-agent"
+version = "0.3.0"
 description = "A self-improving RL coding assistant that runs entirely on your machine. No API keys, no cloud, no subscriptions."
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
-  {name = "Local IDE RL Agent Contributors"},
+  {name = "planksconstant-arch", email = "planksconstant-arch@users.noreply.github.com"},
 ]
 keywords = [
   "reinforcement-learning",
@@ -48,13 +48,13 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/your-org/local-ide-agent"
-Repository = "https://github.com/your-org/local-ide-agent"
-"Bug Tracker" = "https://github.com/your-org/local-ide-agent/issues"
-Changelog = "https://github.com/your-org/local-ide-agent/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/planksconstant-arch/Aegis"
+Repository = "https://github.com/planksconstant-arch/Aegis"
+"Bug Tracker" = "https://github.com/planksconstant-arch/Aegis/issues"
+Changelog = "https://github.com/planksconstant-arch/Aegis/blob/main/CHANGELOG.md"
 
 [project.scripts]
-local-ide-agent = "local_ide_agent.main:main"
+aegis-agent = "local_ide_agent.main:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
