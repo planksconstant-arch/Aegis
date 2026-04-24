@@ -45,6 +45,6 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: pip install -e .
-      - run: local-ide-agent train --episodes 3
-      - run: local-ide-agent eval
-      - run: local-ide-agent dashboard --once
+      - run: aegis-agent train --episodes 3
+      - run: aegis-agent eval
+      - run: aegis-agent dashboard --once
