@@ -17,40 +17,58 @@ from typing import Any
 
 import numpy as np
 
+# Optional Numba JIT for significant math speedups
+try:
+    import numba
+    jit = numba.jit(nopython=True, cache=True)
+except ImportError:
+    def jit(*args, **kwargs):
+        def wrapper(func):
+            return func
+        if len(args) == 1 and callable(args[0]):
+            return args[0]
+        return wrapper
+
 
 # ---------------------------------------------------------------------------
 # Activation functions
 # ---------------------------------------------------------------------------
 
+@jit
 def relu(x: np.ndarray) -> np.ndarray:
     return np.maximum(0.0, x)
 
 
+@jit
 def relu_grad(x: np.ndarray) -> np.ndarray:
     """Gradient of relu w.r.t. pre-activation x."""
     return (x > 0).astype(x.dtype)
 
 
 def softmax(x: np.ndarray) -> np.ndarray:
-    """Numerically stable row-wise softmax."""
+    """Numerically stable row-wise softmax. Numba doesn't fully support axis=-1, so keep it pure numpy."""
     shifted = x - np.max(x, axis=-1, keepdims=True)
     exp_x = np.exp(shifted)
     return exp_x / (exp_x.sum(axis=-1, keepdims=True) + 1e-8)
 
 
 def log_softmax(x: np.ndarray) -> np.ndarray:
+    """Keep pure numpy due to axis=-1 limitations in basic nopython numba without manual loops."""
     shifted = x - np.max(x, axis=-1, keepdims=True)
     return shifted - np.log(np.exp(shifted).sum(axis=-1, keepdims=True) + 1e-8)
 
 
+@jit
 def tanh_act(x: np.ndarray) -> np.ndarray:
     return np.tanh(x)
 
 
+@jit
 def tanh_grad(x: np.ndarray) -> np.ndarray:
     return 1.0 - np.tanh(x) ** 2
 
 
+@jit
 def huber_loss(pred: np.ndarray, target: np.ndarray, delta: float = 1.0) -> np.ndarray:
     """Element-wise Huber loss."""
     err = pred - target
@@ -60,6 +78,7 @@ def huber_loss(pred: np.ndarray, target: np.ndarray, delta: float = 1.0) -> np.n
     return np.where(abs_err <= delta, quad, lin)
 
 
+@jit
 def huber_grad(pred: np.ndarray, target: np.ndarray, delta: float = 1.0) -> np.ndarray:
     """Gradient of Huber loss w.r.t. pred."""
     err = pred - target

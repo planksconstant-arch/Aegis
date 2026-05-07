@@ -195,6 +195,12 @@ class PrioritizedReplayBuffer:
         self._max_priority = max(self._max_priority, priority)
 
     def _priority(self, td_error: float) -> float:
+        if math.isnan(td_error):
+            td_error = 0.0
+        if math.isinf(td_error):
+            td_error = 100.0
+        # Prevent massive priority spikes
+        td_error = max(0.0, min(float(td_error), 1000.0))
         return (abs(td_error) + self.eps) ** self.alpha
 
     # ------------------------------------------------------------------
