@@ -10,6 +10,50 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.window.showInformationMessage('Aegis: Connected to Local Agent Daemon.');
     });
 
+    let generateFixCmd = vscode.commands.registerCommand('aegis.generateFix', async () => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showInformationMessage('Aegis: Open a file to generate a fix.');
+            return;
+        }
+
+        const document = editor.document;
+        const diagnostics = vscode.languages.getDiagnostics(document.uri);
+        const errorStrings = diagnostics.map(d => d.message);
+
+        vscode.window.withProgress({
+            location: vscode.ProgressLocation.Notification,
+            title: "Aegis: Generating fix via LLM & RL...",
+            cancellable: false
+        }, async () => {
+            try {
+                const response = await axios.post(`${BRIDGE_URL}/generate-fix`, {
+                    task: "Fix current issues and optimize",
+                    open_files: [document.fileName],
+                    diagnostics: errorStrings,
+                    user_present: true,
+                    file_content: document.getText()
+                });
+
+                const diff = response.data.diff;
+                if (diff) {
+                    const edit = new vscode.WorkspaceEdit();
+                    const fullRange = new vscode.Range(
+                        document.positionAt(0),
+                        document.positionAt(document.getText().length)
+                    );
+                    edit.replace(document.uri, fullRange, diff);
+                    await vscode.workspace.applyEdit(edit);
+                    vscode.window.showInformationMessage(`Aegis applied fix! (RL Confidence Score: ${response.data.score.toFixed(3)})`);
+                } else {
+                    vscode.window.showInformationMessage('Aegis could not generate a safe fix.');
+                }
+            } catch (error) {
+                vscode.window.showErrorMessage("Aegis bridge error. Is the local daemon running?");
+            }
+        });
+    });
+
     // Automatically send diagnostics to Aegis when a file is saved
     let saveHook = vscode.workspace.onDidSaveTextDocument(async (document) => {
         const diagnostics = vscode.languages.getDiagnostics(document.uri);
@@ -54,7 +98,7 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.window.showInformationMessage('Aegis learned from your rejection.');
     });
 
-    context.subscriptions.push(startCmd, saveHook, acceptCmd, rejectCmd);
+    context.subscriptions.push(startCmd, generateFixCmd, saveHook, acceptCmd, rejectCmd);
 }
 
 export function deactivate() {}

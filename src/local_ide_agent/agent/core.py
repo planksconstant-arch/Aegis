@@ -28,6 +28,9 @@ class LocalIDEAgent:
         self.planner = Planner()
         self.memory_store = memory_store
         self.replay_buffer = replay_buffer
+        
+        from local_ide_agent.agent.llm import LLMClient
+        self.llm = LLMClient(settings.llm)
 
     def evaluate(self, observation: Observation) -> Decision:
         enriched = observation.model_copy(deep=True)

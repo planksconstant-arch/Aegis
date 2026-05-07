@@ -50,3 +50,25 @@ We tested exploring 20 unknown IDE states (e.g. encountering an unfamiliar frame
 
 ## 4. Final Verdict
 The architecture implemented in Aegis represents the optimal localized trade-off between semantic generation power (via LLMs) and long-term user personalization (via pure-NumPy continuous Reinforcement Learning), validated through extreme constraint minimization.
+
+## 5. Running Real-World Benchmarks (Phase 2 Upgrade)
+
+While the initial data was simulated, Aegis now supports end-to-end evaluation against real-world projects via the `eval` CLI command. This command spins up the Shadow Workspace and tests the candidates against your actual Pytest suite.
+
+**How to run a benchmark:**
+1. Create a JSON file (e.g., `tasks.json`) containing the tasks you want to test:
+   ```json
+   [
+     {
+       "description": "Fix the memory leak in the connection loop",
+       "target_file": "src/connection.py",
+       "diagnostics": ["ResourceWarning: unclosed socket"]
+     }
+   ]
+   ```
+2. Run the `eval` command against your project directory:
+   ```bash
+   aegis-agent eval --target-dir . --tasks tasks.json
+   ```
+
+Aegis will generate candidate patches, evaluate them inside a shadow `.shadow_eval` workspace, verify compilation, run the linter, run your pytest suite, and output a detailed JSON/stdout report showing the true acceptance rate.

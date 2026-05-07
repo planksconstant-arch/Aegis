@@ -69,6 +69,20 @@ class IDEBridgeHandler(BaseHTTPRequestHandler):
             self.respond(HTTPStatus.OK, response)
             return
 
+        if self.path == "/generate-fix":
+            payload = self.read_json()
+            obs = Observation.model_validate(payload)
+            file_content = payload.get("file_content", "")
+            
+            candidates = self.agent.llm.generate_candidates(obs, file_content)
+            if not candidates:
+                self.respond(HTTPStatus.OK, {"diff": ""})
+                return
+                
+            best_candidate, q_val = self.agent.policy.rank_candidates(candidates)
+            self.respond(HTTPStatus.OK, {"diff": best_candidate.diff, "score": q_val})
+            return
+
         if self.path == "/act":
             payload = self.read_json()
             observation = Observation.model_validate(payload)

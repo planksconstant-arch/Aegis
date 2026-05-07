@@ -26,11 +26,16 @@ class PatchEvaluator:
 
     def evaluate_candidate(self, candidate: CandidatePatch, target_relative_path: str) -> StructuredReward:
         """Applies the candidate's content to the target file in a shadow workspace and scores it."""
-        shadow = self.shadow_manager.create_shadow_copy(label=f"eval-{candidate.id[:6]}")
+        shadow = self.shadow_manager.get_persistent_eval_workspace()
         target_path = shadow.shadow_root / target_relative_path
+        
+        # Read the original content to perform a lightning-fast revert
+        original_content = target_path.read_text(encoding="utf-8") if target_path.exists() else ""
+        file_existed = target_path.exists()
         
         try:
             # 1. Apply the candidate replacement
+            target_path.parent.mkdir(parents=True, exist_ok=True)
             target_path.write_text(candidate.diff, encoding="utf-8")
             
             # 2. Check compilation (Python syntax)
@@ -68,11 +73,11 @@ class PatchEvaluator:
             )
             
         finally:
-            # Cleanup the shadow workspace aggressively to save disk IO during training
-            try:
-                shutil.rmtree(shadow.shadow_root, ignore_errors=True)
-            except Exception:
-                pass
+            # Fast revert: write back the original string instead of deleting the whole directory
+            if file_existed:
+                target_path.write_text(original_content, encoding="utf-8")
+            else:
+                target_path.unlink(missing_ok=True)
 
     def _run_linter(self, workspace: Path, target_file: str) -> bool:
         cmd = ["python", "-m", "ruff", "check", target_file]

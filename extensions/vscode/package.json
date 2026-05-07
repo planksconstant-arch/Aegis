@@ -19,6 +19,10 @@
         "title": "Aegis: Connect to Local Agent"
       },
       {
+        "command": "aegis.generateFix",
+        "title": "Aegis: Generate Fix (LLM + RL)"
+      },
+      {
         "command": "aegis.acceptSuggestion",
         "title": "Aegis: Accept Suggestion"
       },
@@ -29,6 +33,10 @@
     ],
     "menus": {
       "editor/context": [
+        {
+          "command": "aegis.generateFix",
+          "group": "navigation"
+        },
         {
           "command": "aegis.startSession",
           "group": "navigation"

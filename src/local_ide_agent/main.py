@@ -13,6 +13,7 @@ from local_ide_agent.deployment.background import BackgroundDeploymentManager, S
 from local_ide_agent.memory.store import MemoryStore
 from local_ide_agent.rl.curiosity import RNDModule
 from local_ide_agent.rl.eval import EvaluationHarness
+from local_ide_agent.rl.benchmark import BenchmarkHarness
 from local_ide_agent.rl.n_step import NStepReturnBuffer
 from local_ide_agent.rl.policy import ActorCriticPolicy
 from local_ide_agent.rl.replay import PrioritizedReplayBuffer
@@ -58,6 +59,7 @@ def build_agent(config_path: str | None = None) -> LocalIDEAgent:
     policy = ActorCriticPolicy(
         encoder_stack=StateEncoderStack(settings.encoders),
         hp=settings.rl,
+        block_high_risk=settings.autonomy.block_high_risk,
     )
     agent = LocalIDEAgent(
         settings=settings,
@@ -71,6 +73,8 @@ def build_agent(config_path: str | None = None) -> LocalIDEAgent:
         shadow_manager=ShadowWorkspaceManager(workspace_root=workspace_root, settings=settings.shadow),
         memory_store=memory_store,
     )
+    from local_ide_agent.agent.llm import LLMClient
+    agent.llm = LLMClient(settings.llm)
     return agent
 
 
@@ -179,6 +183,16 @@ def run_eval(config_path: str | None, train_avg_reward: float = 0.0) -> int:
     return 0
 
 
+def run_benchmark(config_path: str | None, target_dir: str, tasks: str) -> int:
+    agent = build_agent(config_path)
+    target_path = Path(target_dir).resolve()
+    tasks_path = Path(tasks).resolve()
+    harness = BenchmarkHarness(agent, target_dir=target_path)
+    report = harness.run_benchmark(tasks_path)
+    report.print_report()
+    return 0
+
+
 def run_live_dashboard(
     config_path: str | None,
     interval: float = 2.0,
@@ -235,9 +249,13 @@ def main() -> int:
 
     subparsers.add_parser("serve-bridge", help="Run the local IDE bridge server", parents=[common])
 
-    eval_parser = subparsers.add_parser("eval", help="Evaluate policy on held-out tasks", parents=[common])
+    eval_parser = subparsers.add_parser("eval-sim", help="Evaluate policy on held-out simulated tasks", parents=[common])
     eval_parser.add_argument("--train-avg-reward", type=float, default=0.0,
                              help="Training avg reward to compute generalization gap")
+
+    bench_parser = subparsers.add_parser("eval", help="Run real-world benchmarks against a target directory", parents=[common])
+    bench_parser.add_argument("--target-dir", required=True, help="Target project directory")
+    bench_parser.add_argument("--tasks", required=True, help="Path to JSON file containing benchmark tasks")
 
     dash_parser = subparsers.add_parser("dashboard", help="Live terminal training dashboard", parents=[common])
     dash_parser.add_argument("--interval", type=float, default=2.0, help="Refresh interval in seconds")
@@ -259,8 +277,10 @@ def main() -> int:
         return run_research_summary(args.config)
     if args.command == "serve-bridge":
         return run_bridge(args.config)
-    if args.command == "eval":
+    if args.command == "eval-sim":
         return run_eval(args.config, args.train_avg_reward)
+    if args.command == "eval":
+        return run_benchmark(args.config, args.target_dir, args.tasks)
     if args.command == "dashboard":
         return run_live_dashboard(args.config, args.interval, args.once)
     return 1

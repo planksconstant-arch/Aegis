@@ -120,6 +120,7 @@ class ActorCriticPolicy(Policy):
 
     encoder_stack: StateEncoderStack = field(default_factory=StateEncoderStack)
     hp: RLHyperparams = field(default_factory=RLHyperparams)
+    block_high_risk: bool = True
 
     # Populated in __post_init__
     trunk: MLP = field(init=False)
@@ -256,6 +257,13 @@ class ActorCriticPolicy(Policy):
             repeat_idx = _idx(last_action)
             if repeat_idx >= 0:
                 masked_logits[repeat_idx] -= float(consecutive_same) * 0.5
+
+        # Rule 5 (HARD BLOCK): Completely mask high-risk actions if forbidden
+        if self.block_high_risk:
+            from local_ide_agent.schemas import RiskLevel
+            for i, action in enumerate(ACTION_SPACE):
+                if action.risk == RiskLevel.HIGH:
+                    masked_logits[i] = -1e9
 
         probs = softmax(masked_logits)
         self.last_probs = probs.copy()

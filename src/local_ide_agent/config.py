@@ -16,9 +16,9 @@ class AutonomySettings(BaseModel):
 
 class LLMSettings(BaseModel):
     enabled: bool = False
-    base_url: str = "http://localhost:11434/v1"
-    api_key: str = "dummy"
-    model_name: str = "deepseek-coder"
+    base_url: str | None = "http://localhost:11434/v1"  # Optional, mainly for local or custom endpoints
+    api_key: str | None = None  # If None, relies on environment variables (litellm standard)
+    model_name: str = "ollama/deepseek-coder"  # Now expects a litellm-compatible string
     max_candidates: int = 3
     system_prompt: str = "You are a coding assistant. Generate a diff to fix the issue."
 

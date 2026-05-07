@@ -1,0 +1,7 @@
+[
+  {
+    "description": "Add a simple docstring to test_dashboard_can_parse_stats explaining that it tests the color helper.",
+    "target_file": "tests/test_cli.py",
+    "diagnostics": []
+  }
+]

@@ -46,6 +46,28 @@ class ShadowWorkspaceManager:
             created_at=datetime.now(UTC).isoformat(),
         )
 
+    def get_persistent_eval_workspace(self) -> ShadowWorkspace:
+        """Returns a single persistent shadow copy, creating it if it doesn't exist. This saves massive disk IO during eval."""
+        shadow_id = "persistent_eval"
+        target = self.shadow_root / shadow_id
+        if not target.exists():
+            ignore = shutil.ignore_patterns(
+                "__pycache__",
+                ".git",
+                ".shadow",
+                ".shadow_eval",
+                ".agent",
+                ".venv",
+                "node_modules",
+            )
+            shutil.copytree(self.workspace_root, target, ignore=ignore, dirs_exist_ok=False)
+        return ShadowWorkspace(
+            shadow_id=shadow_id,
+            source_root=self.workspace_root,
+            shadow_root=target,
+            created_at=datetime.fromtimestamp(target.stat().st_mtime, UTC).isoformat() if target.exists() else datetime.now(UTC).isoformat(),
+        )
+
     def list_shadows(self) -> list[ShadowWorkspace]:
         items: list[ShadowWorkspace] = []
         for path in sorted(self.shadow_root.iterdir(), reverse=True):
