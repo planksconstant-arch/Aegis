@@ -144,7 +144,8 @@ class ActorCriticPolicy(Policy):
 
     # Hybrid RL: Patch Candidate Ranking
     patch_critic: QNetwork = field(init=False)
-    patch_critic_opt: AdamOptimizer = field(init=False)
+    patch_critic_l1_opt: AdamOptimizer = field(init=False)
+    patch_critic_l2_opt: AdamOptimizer = field(init=False)
 
     # Runtime state
     last_fused_state: FusedState | None = field(init=False, default=None)
@@ -183,7 +184,8 @@ class ActorCriticPolicy(Policy):
 
         # Hybrid RL: Patch Critic (takes 128-d trunk + 64-d patch embedding)
         self.patch_critic = QNetwork(trunk_out, 64, hidden=critic_hidden, name="patch_critic")
-        self.patch_critic_opt = AdamOptimizer(lr=lr)
+        self.patch_critic_l1_opt = AdamOptimizer(lr=lr)
+        self.patch_critic_l2_opt = AdamOptimizer(lr=lr)
 
         # Load persisted weights if available
         self._load_weights()
@@ -361,9 +363,13 @@ class ActorCriticPolicy(Policy):
 
         grad_q = float(huber_grad(np.array([q_pred]), np.array([td_target]))[0])
         
-        # We only update the l2 of the patch critic for simplicity
-        # Wait, backward_and_update updates both layers!
-        self.patch_critic.backward_and_update(grad_q * self.hp.critic_coefficient, self.patch_critic_opt, self.patch_critic_opt)
+        # Backprop through both layers with separate optimizers to ensure
+        # correct per-layer Adam bias correction.
+        self.patch_critic.backward_and_update(
+            grad_q * self.hp.critic_coefficient,
+            self.patch_critic_l1_opt,
+            self.patch_critic_l2_opt,
+        )
         
         return abs(td_error)
 

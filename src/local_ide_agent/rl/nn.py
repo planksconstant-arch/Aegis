@@ -267,7 +267,13 @@ class MLP:
             self.layers.append(
                 Linear(layer_sizes[idx], layer_sizes[idx + 1], name=f"{name}_l{idx}")
             )
-        # Cache activations for backward
+        # Cache activations for backward.
+        # INVARIANT: Each MLP/Linear instance has its own cache.  Cache
+        # corruption can only occur when the *same* MLP instance is called
+        # forward() a second time before backward().  The policy's
+        # update_step() is safe because it saves trunk output as a copy
+        # in decide() (self.last_trunk_output).  RND uses
+        # _predictor_update_inline() to avoid touching MLP.forward().
         self._activations: list[np.ndarray] = []
         self._pre_activations: list[np.ndarray] = []
 

@@ -65,4 +65,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Autonomy gating: auto-low-risk / require-approval / block-high-risk (`agent/core.py`)
 - Local IDE connector: file read/write, bounded command execution, event logging (`connectors/ide.py`)
 - Full CLI: `train`, `run`, `serve-bridge`, `shadow-run`, `counterfactual-lab`, `research-plan`
-- CQL offline regulariser, Conservative Q-Learning loss term
+- CQL offline regulariser — *planned but not yet implemented*; config stub removed in v0.3.0

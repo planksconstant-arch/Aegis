@@ -10,7 +10,7 @@ from urllib.parse import parse_qs, urlparse
 from local_ide_agent.agent.core import LocalIDEAgent
 from local_ide_agent.connectors.registry import ConnectorRegistry
 from local_ide_agent.deployment.background import ShadowRunRequest
-from local_ide_agent.lab.mirofish_sim import MirofishStyleSimulator
+from local_ide_agent.lab.synthpanel_sim import SynthPanelSimulator
 from local_ide_agent.schemas import ClientRegistration, FeedbackRecord, Observation
 
 
@@ -153,9 +153,9 @@ class IDEBridgeHandler(BaseHTTPRequestHandler):
             self.respond(HTTPStatus.OK, result)
             return
 
-        if self.path == "/lab/mirofish-review":
+        if self.path == "/lab/synthpanel-review":
             payload = self.read_json()
-            simulator = MirofishStyleSimulator()
+            simulator = SynthPanelSimulator()
             objective = str(payload.get("objective", "Review a candidate strategy"))
             candidate = dict(payload.get("candidate", {}))
             self.respond(HTTPStatus.OK, simulator.review_candidate(candidate, objective))

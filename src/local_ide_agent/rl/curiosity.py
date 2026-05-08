@@ -117,44 +117,12 @@ class RNDModule:
     # Predictor training step
     # ------------------------------------------------------------------
 
-    def update(self, state_vector: list[float] | np.ndarray) -> float:
-        """
-        Train the predictor one step to minimise ||f_pred(s) - f_target(s)||^2.
-        Returns the raw prediction error (before beta scaling).
-        """
-        sv = np.asarray(state_vector, dtype=np.float64)
-
-        # Compute target embedding (no gradient needed — apply target weights manually)
-        # We avoid calling target_net.forward() AFTER predictor_net.forward()
-        # to prevent overwriting the target net's own cache (not relevant here)
-        # but especially to ensure predictor activation cache is fresh for backward.
-        target_out = self._target_forward_no_cache(sv)
-
-        # Predictor forward — this sets predictor_net._activations fresh
-        pred_out = self.predictor_net.forward(sv)
-
-        error = pred_out - target_out                # (embed_dim,)
-        loss = float(np.sum(error ** 2))
-
-        # Gradient of MSE: 2 * (pred - target), immediately back-prop
-        grad_out = 2.0 * error
-        grads = self.predictor_net.backward(grad_out)
-        for layer, (gW, gb), opt in zip(self.predictor_net.layers, grads, self.predictor_opts):
-            layer.apply_gradients(gW, gb, opt)
-
-        self._update_count += 1
-        if self._update_count % 256 == 0 and self.weight_path:
-            self._save_weights()
-
-        return loss
-
     def _target_forward_no_cache(self, sv: np.ndarray) -> np.ndarray:
         """
         Run the target network forward pass using numpy directly,
         without touching the MLP activation cache (so curiosity_reward()
         and update() can both call the target without cache conflicts).
         """
-        import numpy as np
         from local_ide_agent.rl.nn import relu
         h = sv.copy()
         # Apply layer norm (same as MLP does internally)

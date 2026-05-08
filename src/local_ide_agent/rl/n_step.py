@@ -92,8 +92,11 @@ class NStepReturnBuffer:
             self._emit()
 
         if done:
-            # Drain any remaining steps in the buffer
-            while len(self._buf) > 0:
+            # Drain remaining steps. Note: _emit() calls _buf.clear() on
+            # terminal steps, so the buffer may already be empty here.
+            # This loop only fires when _emit() consumed a non-terminal
+            # head while the terminal step was deeper in the buffer.
+            while self._buf:
                 self._emit()
 
     def _emit(self) -> None:

@@ -18,12 +18,14 @@ class SwarmFinding:
     rationale: str
 
 
-class MirofishStyleSimulator:
+class SynthPanelSimulator:
     """
-    A local MiroFish-inspired simulation layer.
+    SynthPanel — a synthetic stakeholder review panel.
 
-    This is not an official MiroFish integration. It is a swarm-style stakeholder
-    simulation that evaluates candidate implementation paths before promotion.
+    Simulates a diverse panel of engineering reviewers (Staff Engineer,
+    QA Lead, Security Reviewer, DevOps Lead, Product Engineer) who each
+    evaluate candidate implementation paths before promotion, providing
+    multi-perspective risk assessment.
     """
 
     def __init__(self) -> None:

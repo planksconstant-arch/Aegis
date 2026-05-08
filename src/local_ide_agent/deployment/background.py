@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from local_ide_agent.config import DeploymentSettings
 from local_ide_agent.lab.counterfactual import CounterfactualPlanner
 from local_ide_agent.lab.executor import CounterfactualExecutor
-from local_ide_agent.lab.mirofish_sim import MirofishStyleSimulator
+from local_ide_agent.lab.synthpanel_sim import SynthPanelSimulator
 from local_ide_agent.memory.store import MemoryStore
 from local_ide_agent.shadow.workspace import ShadowWorkspaceManager
 
@@ -51,7 +51,7 @@ class ShadowBackgroundService:
     memory_store: MemoryStore
     planner: CounterfactualPlanner | None = None
     executor: CounterfactualExecutor | None = None
-    simulator: MirofishStyleSimulator | None = None
+    simulator: SynthPanelSimulator | None = None
 
     def start_run(self, request: ShadowRunRequest) -> dict[str, object]:
         shadow = self.shadow_manager.create_shadow_copy(request.label)
@@ -78,7 +78,7 @@ class ShadowBackgroundService:
     def start_counterfactual_run(self, request: ShadowRunRequest) -> dict[str, object]:
         planner = self.planner or CounterfactualPlanner()
         executor = self.executor or CounterfactualExecutor()
-        simulator = self.simulator or MirofishStyleSimulator()
+        simulator = self.simulator or SynthPanelSimulator()
         snapshot = self.memory_store.snapshot(request.user_id)
         ranked_profiles = planner.score_profiles(snapshot, request.objective)
         candidates: list[dict[str, object]] = []

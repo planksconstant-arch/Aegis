@@ -31,7 +31,7 @@ class TrainingSettings(BaseModel):
 
 
 class DeploymentSettings(BaseModel):
-    runtime_name: str = "mirofish"
+    runtime_name: str = "synthpanel"
     max_background_agents: int = 3
     heartbeat_seconds: int = 30
 
@@ -87,8 +87,9 @@ class RLHyperparams(BaseModel):
     per_beta_steps: int = 100_000
     replay_capacity: int = 4096
 
-    # Conservative Q-Learning offline regulariser
-    cql_alpha: float = 0.5
+    # NOTE: CQL offline regulariser was planned but is not yet implemented
+    # in the training loop. The config field has been removed to avoid
+    # implying a feature that doesn't exist. See CHANGELOG.md for details.
 
     # Epsilon-greedy exploration
     epsilon_start: float = 1.0

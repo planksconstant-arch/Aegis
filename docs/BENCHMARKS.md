@@ -1,6 +1,16 @@
 # Empirical Validation & Benchmarks (Aegis Agent v0.3.0)
 
-This document provides formal empirical validation for the mathematical heuristics and architectural design patterns utilized in the Aegis Local IDE Agent. All tests were executed in an isolated local-environment constraint across 50 simulated development tasks.
+> **⚠️ Methodology Disclaimer**
+>
+> All results in this document are **preliminary** and were obtained against the project's
+> own internal `SimulatedCodingEnvironment` — a synthetic MDP with 22 hand-crafted tasks
+> and heuristic reward shaping. **No external codebases, third-party baselines, random
+> seed specifications, or independent reproductions** were used. The numbers below should
+> be treated as *directional indicators of architecture viability*, not as peer-reviewed
+> empirical claims. See [Section 5](#5-running-real-world-benchmarks-phase-2-upgrade) for
+> instructions on running real-world evaluations against your own project.
+
+This document provides preliminary validation for the mathematical heuristics and architectural design patterns utilized in the Aegis Local IDE Agent. All tests were executed in an isolated local-environment constraint across 50 simulated development tasks.
 
 ## 1. Action Space Stability Analysis
 

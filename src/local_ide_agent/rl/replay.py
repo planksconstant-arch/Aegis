@@ -67,16 +67,6 @@ class SumTree:
         if parent != 0:
             self._propagate(parent, delta)
 
-    def _retrieve(self, index: int, cumsum: float) -> int:
-        """Walk the tree to find the leaf whose prefix-sum contains cumsum."""
-        left = 2 * index + 1
-        right = left + 1
-        if left >= len(self._tree):
-            return index
-        if cumsum <= self._tree[left]:
-            return self._retrieve(left, cumsum)
-        return self._retrieve(right, cumsum - self._tree[left])
-
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------

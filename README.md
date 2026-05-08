@@ -31,10 +31,12 @@ The framework requires **no deep learning frameworks (e.g., PyTorch, TensorFlow)
 Our framework decomposes into three interlocking sub-systems designed for stability in unbounded action spaces.
 
 ### 2.1 State Representation & Fusion
-The IDE state $S_t$ is encoded via deterministic hashing or local Sentence-Transformer embeddings into a 576-dimensional vector representing:
-1. **Semantic Code Context** (192-d): Open files, active diagnostics.
-2. **Behavioral Context** (192-d): Historical user acceptance latency, edit distance, revert rates.
-3. **Temporal Context** (192-d): Task pressure, localized time, session phase.
+The IDE state $S_t$ is encoded via deterministic hashing or local Sentence-Transformer embeddings into three streams, fused by a **Learned Cross-Attention** layer into a 576-dimensional vector:
+1. **Semantic Code Context** (384-d input → 256-d attended via $W_V$ projection): Open files, active diagnostics.
+2. **Session Context** (64-d input → 256-d via $W_C$ projection): Task pressure, localized time, session phase.
+3. **Behavioral Context** (128-d passthrough): Historical user acceptance latency, edit distance, revert rates.
+
+The three streams are concatenated (640-d) and projected to 576-d through a learnable $W_{out}$ matrix. See `rl/attention.py` for the full Q/K/V derivation.
 
 ### 2.2 Hybrid LLM-RL Decision Engine
 To resolve the infinite-action space inherent in open-ended text generation, we collapse the action space into a ranking paradigm:
