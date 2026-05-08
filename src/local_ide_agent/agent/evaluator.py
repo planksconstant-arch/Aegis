@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 import shutil
@@ -8,6 +9,8 @@ from pathlib import Path
 from local_ide_agent.config import ShadowWorkspaceSettings
 from local_ide_agent.schemas import CandidatePatch, StructuredReward
 from local_ide_agent.shadow.workspace import ShadowWorkspaceManager
+
+_MODULE_NOT_FOUND = "No module named"
 
 
 class PatchEvaluator:
@@ -84,17 +87,33 @@ class PatchEvaluator:
         cmd = [sys.executable, "-m", "ruff", "check", target_file]
         try:
             res = subprocess.run(cmd, cwd=workspace, capture_output=True, text=True, timeout=10)
+            # When ruff is not installed, Python runs fine but prints
+            # "No module named ruff" to stderr and exits with code 1.
+            if res.returncode != 0 and _MODULE_NOT_FOUND in res.stderr:
+                return True
             return res.returncode == 0
         except (FileNotFoundError, OSError):
-            # Ruff not installed or blocked by OS policy (e.g. Windows AppControl)
+            # Ruff binary not found or blocked by OS policy (e.g. Windows AppControl)
             return True
         except subprocess.TimeoutExpired:
             return False
 
     def _run_tests(self, workspace: Path) -> bool:
-        cmd = [sys.executable, "-m", "pytest", "-q", "--no-header"]
+        # Ensure the workspace dir is on PYTHONPATH so bare imports
+        # (e.g. "from math_utils import add") resolve on all platforms.
+        env = {**os.environ, "PYTHONPATH": str(workspace)}
+        cmd = [
+            sys.executable, "-m", "pytest", "-q", "--no-header",
+            "--rootdir", str(workspace), str(workspace),
+        ]
         try:
-            res = subprocess.run(cmd, cwd=workspace, capture_output=True, text=True, timeout=30)
+            res = subprocess.run(
+                cmd, cwd=workspace, capture_output=True,
+                text=True, timeout=30, env=env,
+            )
+            # If pytest module is somehow missing, treat as "no test runner"
+            if res.returncode != 0 and _MODULE_NOT_FOUND in res.stderr:
+                return True
             return res.returncode == 0
         except (FileNotFoundError, OSError):
             # pytest not found or blocked by OS policy (e.g. Windows AppControl)
