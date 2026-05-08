@@ -46,5 +46,5 @@ jobs:
           cache: pip
       - run: pip install -e .
       - run: aegis-agent train --episodes 3
-      - run: aegis-agent eval
+      - run: aegis-agent eval-sim
       - run: aegis-agent dashboard --once

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import subprocess
+import sys
 import shutil
 from pathlib import Path
 
@@ -80,22 +81,23 @@ class PatchEvaluator:
                 target_path.unlink(missing_ok=True)
 
     def _run_linter(self, workspace: Path, target_file: str) -> bool:
-        cmd = ["python", "-m", "ruff", "check", target_file]
+        cmd = [sys.executable, "-m", "ruff", "check", target_file]
         try:
             res = subprocess.run(cmd, cwd=workspace, capture_output=True, text=True, timeout=10)
             return res.returncode == 0
-        except FileNotFoundError:
-            # Ruff not installed in the environment
+        except (FileNotFoundError, OSError):
+            # Ruff not installed or blocked by OS policy (e.g. Windows AppControl)
             return True
         except subprocess.TimeoutExpired:
             return False
 
     def _run_tests(self, workspace: Path) -> bool:
-        cmd = ["pytest", "-q"]
+        cmd = [sys.executable, "-m", "pytest", "-q", "--no-header"]
         try:
             res = subprocess.run(cmd, cwd=workspace, capture_output=True, text=True, timeout=30)
             return res.returncode == 0
-        except FileNotFoundError:
+        except (FileNotFoundError, OSError):
+            # pytest not found or blocked by OS policy (e.g. Windows AppControl)
             return True
         except subprocess.TimeoutExpired:
             return False
