@@ -98,12 +98,30 @@ class PatchEvaluator:
         except subprocess.TimeoutExpired:
             return False
 
+    @staticmethod
+    def _purge_pycache(workspace: Path) -> None:
+        """Remove all __pycache__ dirs so stale .pyc bytecode never shadows
+        a freshly-written .py file.  This is critical when the persistent
+        eval workspace is reused across consecutive evaluations — file
+        writes that land within the same second share an mtime, which
+        tricks CPython's pyc-freshness check into serving stale code."""
+        for cache_dir in list(workspace.rglob("__pycache__")):
+            shutil.rmtree(cache_dir, ignore_errors=True)
+
     def _run_tests(self, workspace: Path) -> bool:
+        # Purge stale bytecode before every run to avoid cross-evaluation
+        # contamination in the persistent shadow workspace.
+        self._purge_pycache(workspace)
+
         # Ensure the workspace dir is on PYTHONPATH so bare imports
         # (e.g. "from math_utils import add") resolve on all platforms.
-        env = {**os.environ, "PYTHONPATH": str(workspace)}
+        env = {
+            **os.environ,
+            "PYTHONPATH": str(workspace),
+            "PYTHONDONTWRITEBYTECODE": "1",
+        }
         cmd = [
-            sys.executable, "-m", "pytest", "-q", "--no-header",
+            sys.executable, "-B", "-m", "pytest", "-q", "--no-header",
             "--rootdir", str(workspace), str(workspace),
         ]
         try:
