@@ -79,7 +79,7 @@ class ClientRegistration(BaseModel):
 
 
 class FeedbackRecord(BaseModel):
-    client_id: str
+    client_id: str = "default"
     user_id: str = "default"
     reward: float = 0.0
     accepted: bool = False

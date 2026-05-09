@@ -92,22 +92,6 @@ This document explains the key hyperparameters in Aegis's RL pipeline, when to a
 - **Lower (0.2):** Acceptable early in training when some bias is tolerable for faster learning.
 - Keep the annealing schedule (`per_beta_steps`) long enough that β reaches 1.0 before training ends.
 
----
-
-## 7. Conservative Q-Learning Alpha (`cql_alpha`)
-
-| Setting | Default | Range |
-|---------|---------|-------|
-| `cql_alpha` | `0.5` | `0.0 – 2.0` |
-
-**What it does:** Regularizes Q-values to prevent overestimation of out-of-distribution actions. Critical for offline RL.
-
-**When to adjust:**
-- **Lower (0.1–0.3):** When you have plenty of online experience and don't need aggressive regularization.
-- **Higher (1.0–2.0):** When bootstrapping from an offline dataset where many actions were never actually tried. Higher values penalize unseen actions more.
-
-> [!IMPORTANT]
-> If you're running purely online (no offline dataset), you can set this to `0.0` safely.
 
 ---
 
@@ -149,7 +133,7 @@ This document explains the key hyperparameters in Aegis's RL pipeline, when to a
 | Agent keeps repeating the same action | ↑ `entropy_coefficient` to 0.03 |
 | Training reward oscillates wildly | ↓ `ppo_clip_epsilon` to 0.1 |
 | Agent ignores rare but important failures | ↑ `per_alpha` to 0.8 |
-| Q-values explode to ±100+ | ↑ `cql_alpha` to 1.0 |
+
 | Agent never tries new strategies | ↑ `curiosity_beta` to 0.02 |
 | Very slow convergence | ↑ `learning_rate` to 1e-3, ↑ `n_step` to 10 |
 | Agent "forgets" good behaviors | ↓ `ppo_clip_epsilon`, ↓ `learning_rate` |

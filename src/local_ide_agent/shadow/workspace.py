@@ -100,4 +100,6 @@ class ShadowWorkspaceManager:
             except PermissionError:
                 # Older shadow copies can still be temporarily locked on Windows.
                 # Skipping cleanup is safer than failing the new autonomous run.
+                import logging
+                logging.getLogger(__name__).warning(f"Failed to delete {item} due to PermissionError.")
                 continue

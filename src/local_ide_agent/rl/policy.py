@@ -36,7 +36,7 @@ from local_ide_agent.rl.nn import (
     softmax,
 )
 from local_ide_agent.rl.state import FusedState, StateEncoderStack
-from local_ide_agent.schemas import Action, Decision, Observation
+from local_ide_agent.schemas import Action, Decision, Observation, CandidatePatch
 
 
 # ---------------------------------------------------------------------------
@@ -317,7 +317,7 @@ class ActorCriticPolicy(Policy):
     # Hybrid LLM-RL Candidate Ranking
     # ------------------------------------------------------------------
 
-    def rank_candidates(self, candidates: list[Any]) -> tuple[Any, float]:
+    def rank_candidates(self, candidates: list[CandidatePatch]) -> tuple[CandidatePatch, float]:
         """Rank a list of CandidatePatch objects using the patch_critic, returning the best candidate and its Q-value."""
         if not candidates:
             raise ValueError("No candidates provided")

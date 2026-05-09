@@ -108,63 +108,6 @@ class BCWarmStart:
 
 
 # ---------------------------------------------------------------------------
-# CQL Regularizer
-# ---------------------------------------------------------------------------
-
-@dataclass
-class CQLRegularizer:
-    """
-    Conservative Q-Learning offline regularizer.
-
-    Penalizes Q(s, a) for OOD actions by adding:
-      CQL_loss = E_s[ logsumexp_a Q(s,a) - Q(s, a_data) ]
-
-    This pushes Q values for OOD actions below Q values for dataset actions,
-    making the learned policy conservative.
-    """
-
-    alpha: float = 0.5  # CQL temperature (higher = more conservative)
-
-    def cql_loss_and_grad(
-        self,
-        policy,
-        state_vector: list[float],
-        dataset_action_idx: int,
-    ) -> tuple[float, np.ndarray]:
-        """
-        Compute CQL regularizer loss and gradient of Q1 w.r.t. action logits.
-
-        Returns (cql_loss_scalar, grad_q1_wrt_trunk_out)
-        """
-        if not hasattr(policy, "trunk") or not hasattr(policy, "q1"):
-            return 0.0, np.zeros(128, dtype=np.float64)
-
-        obs_vec = np.asarray(state_vector, dtype=np.float64)
-        trunk_out = policy.trunk.forward(obs_vec)
-        n_actions = len(ACTION_SPACE)
-
-        # Q values for all actions
-        all_q: list[float] = []
-        for a_idx in range(n_actions):
-            oh = np.zeros(n_actions, dtype=np.float64)
-            oh[a_idx] = 1.0
-            q_val = policy.q1.forward(trunk_out, oh)
-            all_q.append(q_val)
-
-        all_q_arr = np.array(all_q, dtype=np.float64)
-        q_data = all_q_arr[dataset_action_idx]
-
-        # logsumexp for numerical stability
-        q_max = float(np.max(all_q_arr))
-        logsumexp_q = q_max + math.log(float(np.sum(np.exp(all_q_arr - q_max))) + 1e-8)
-
-        cql_loss = self.alpha * (logsumexp_q - q_data)
-
-        # Gradient flows through the Q network internally on next call
-        return cql_loss, trunk_out
-
-
-# ---------------------------------------------------------------------------
 # Offline training orchestrator
 # ---------------------------------------------------------------------------
 
@@ -179,14 +122,13 @@ class ResearchRLStack:
         return ResearchPlan(
             policy_architecture=self.settings.policy_model,
             value_architecture=self.settings.value_model,
-            objective="BC warm-start followed by conservative offline RL (CQL)",
+            objective="BC warm-start",
             notes=[
                 f"Train sequence windows of {self.settings.sequence_window} steps.",
                 f"Embed trajectories into {self.settings.embedding_dimensions}-dim latent state vectors.",
                 f"Use {self.settings.offline_batch_size}-sample offline batches for replay.",
                 f"Current dataset trajectories: {int(stats['trajectory_count'])}.",
                 f"Average trajectory return: {stats['average_return']:.3f}.",
-                f"CQL alpha: {self.hp.cql_alpha} (higher = more conservative).",
             ],
         )
 
@@ -197,47 +139,6 @@ class ResearchRLStack:
         epochs: int = 5,
     ) -> dict[str, float]:
         """
-        Run full offline training:
-          1. BC warm-start (3 epochs)
-          2. CQL-regularized Q updates (remaining epochs)
-
-        Returns a summary metrics dict.
-        """
-        all_metrics: dict[str, float] = {}
-        stats = dataset.stats()
-        all_metrics["dataset_trajectories"] = float(stats["trajectory_count"])
-        all_metrics["dataset_avg_return"] = stats["average_return"]
-
-        if int(stats["trajectory_count"]) == 0:
-            return all_metrics
-
-        # ---- Phase 1: BC warm-start ----
-        bc = BCWarmStart()
-        bc_metrics = bc.train(policy, dataset, epochs=min(3, epochs), lr=self.hp.learning_rate)
-        all_metrics.update(bc_metrics)
-
-        # ---- Phase 2: CQL regularized offline Q updates ----
-        cql = CQLRegularizer(alpha=self.hp.cql_alpha)
-        cql_losses: list[float] = []
-
-        for epoch in range(epochs):
-            epoch_cql: list[float] = []
-            for trajectory in dataset.trajectories:
-                for transition in trajectory.transitions:
-                    action_idx = _action_name_to_index(transition.action_type)
-                    if action_idx < 0:
-                        continue
-                    state_vec = _text_to_state(transition.observation_text, 576)
-                    cql_loss, _ = cql.cql_loss_and_grad(policy, state_vec, action_idx)
-                    epoch_cql.append(cql_loss)
-
-            avg_cql = sum(epoch_cql) / max(len(epoch_cql), 1)
-            cql_losses.append(avg_cql)
-            all_metrics[f"cql_loss_epoch_{epoch}"] = round(avg_cql, 5)
-
-        if cql_losses:
-            all_metrics["avg_cql_loss"] = round(sum(cql_losses) / len(cql_losses), 5)
-
         # Save weights after offline training
         if hasattr(policy, "_save_weights"):
             try:

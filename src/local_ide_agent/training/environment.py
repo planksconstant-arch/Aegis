@@ -277,9 +277,9 @@ class SimulatedCodingEnvironment:
 
     # --- Legacy one-shot compatibility (used by old training/loop.py) ---
 
-    def reward(self, decision: Decision, decision_description: str) -> EpisodeResult:
+    def reward(self, decision: Decision) -> EpisodeResult:
         """Legacy single-step reward for backward compatibility."""
-        lowered = decision_description.lower()
+        lowered = decision.action.description.lower()
         strategy_name = str(decision.action.payload.get("strategy_name", ""))
         category = _task_category(self._current_task.get("task", ""))
 

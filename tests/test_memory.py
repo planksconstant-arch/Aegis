@@ -24,7 +24,6 @@ def feedback_record():
         user_id="test_user",
         client_id="test_client",
         action_type="minimal_patch",
-        decision_description="Apply a small targeted fix",
         accepted=True,
         reward=0.6,
         style_updates={"indent": "4"},
@@ -41,7 +40,6 @@ class TestMemoryStore:
                 user_id="u1",
                 client_id="test_client",
                 action_type="add_tests",
-                decision_description="Generate tests",
                 accepted=(i % 2 == 0),
                 reward=0.4 if i % 2 == 0 else -0.1,
                 style_updates={},
@@ -62,7 +60,6 @@ class TestMemoryStore:
                 user_id="u2",
                 client_id="test_client",
                 action_type=action,
-                decision_description="",
                 accepted=accepted,
                 reward=reward,
                 style_updates={},
@@ -79,7 +76,6 @@ class TestMemoryStore:
             user_id="u3",
             client_id="test_client",
             action_type="rare_action",
-            decision_description="",
             accepted=True,
             reward=0.5,
             style_updates={},
@@ -98,11 +94,11 @@ class TestMemoryStore:
     def test_user_isolation(self, store):
         store.record_feedback(FeedbackRecord(
             user_id="alice", client_id="test_client", action_type="add_tests",
-            decision_description="", accepted=True, reward=0.5, style_updates={},
+            accepted=True, reward=0.5, style_updates={},
         ))
         store.record_feedback(FeedbackRecord(
             user_id="bob", client_id="test_client", action_type="no_op",
-            decision_description="", accepted=False, reward=-0.2, style_updates={},
+            accepted=False, reward=-0.2, style_updates={},
         ))
         alice_rates = store.get_action_success_rates("alice", min_count=1)
         bob_rates   = store.get_action_success_rates("bob", min_count=1)
