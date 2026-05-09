@@ -139,6 +139,24 @@ class ResearchRLStack:
         epochs: int = 5,
     ) -> dict[str, float]:
         """
+        Run full offline training:
+          1. BC warm-start (3 epochs)
+
+        Returns a summary metrics dict.
+        """
+        all_metrics: dict[str, float] = {}
+        stats = dataset.stats()
+        all_metrics["dataset_trajectories"] = float(stats["trajectory_count"])
+        all_metrics["dataset_avg_return"] = stats["average_return"]
+
+        if int(stats["trajectory_count"]) == 0:
+            return all_metrics
+
+        # ---- Phase 1: BC warm-start ----
+        bc = BCWarmStart()
+        bc_metrics = bc.train(policy, dataset, epochs=min(3, epochs), lr=self.hp.learning_rate)
+        all_metrics.update(bc_metrics)
+
         # Save weights after offline training
         if hasattr(policy, "_save_weights"):
             try:
